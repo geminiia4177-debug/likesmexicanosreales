@@ -2,23 +2,74 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { saveLandingLead } from '../services/orderService';
 
 const LandingCustomizerContext = createContext(null);
-const CUSTOMIZER_STORAGE_KEY = 'lmx_customizer_v2';
+const CUSTOMIZER_STORAGE_KEY = 'lmx_customizer_v3';
+
+export const ARCHETYPE_CONFIGS = {
+  editorial: {
+    archetype: 'editorial',
+    fontHeading: 'font-editorial',
+    fontBody: 'font-clinical',
+    radiusPreset: 'none',
+    borderClass: 'border border-stone-200/80',
+    shadowClass: 'shadow-none',
+    motionPreset: 'slow-fade',
+  },
+  brutalist: {
+    archetype: 'brutalist',
+    fontHeading: 'font-brutalist-condensed',
+    fontBody: 'font-brutalist-mono',
+    radiusPreset: 'none',
+    borderClass: 'border-2 border-black',
+    shadowClass: 'shadow-brutalist',
+    motionPreset: 'snappy-spring',
+  },
+  industrial: {
+    archetype: 'industrial',
+    fontHeading: 'font-industrial',
+    fontBody: 'font-industrial-mono',
+    radiusPreset: 'sm',
+    borderClass: 'border border-amber-500/40',
+    shadowClass: 'shadow-sm',
+    motionPreset: 'kinetic',
+  },
+  clinical: {
+    archetype: 'clinical',
+    fontHeading: 'font-clinical',
+    fontBody: 'font-clinical',
+    radiusPreset: 'bento',
+    borderClass: 'border border-slate-100',
+    shadowClass: 'shadow-xl shadow-blue-500/5',
+    motionPreset: 'slow-fade',
+  },
+  craft: {
+    archetype: 'craft',
+    fontHeading: 'font-editorial',
+    fontBody: 'font-clinical',
+    radiusPreset: 'sm',
+    borderClass: 'border border-amber-900/20',
+    shadowClass: 'shadow-md shadow-stone-900/5',
+    motionPreset: 'slow-fade',
+  },
+};
 
 export function LandingCustomizerProvider({ children }) {
   const [customData, setCustomData] = useState(() => {
     try {
       const saved = localStorage.getItem(CUSTOMIZER_STORAGE_KEY);
-      return saved
-        ? JSON.parse(saved)
-        : {
-            businessName: '',
-            city: '',
-            phone: '',
-            isCustomized: false,
-          };
+      if (saved) return JSON.parse(saved);
     } catch (e) {
-      return { businessName: '', city: '', phone: '', isCustomized: false };
+      // ignore
     }
+    return {
+      businessName: '',
+      city: '',
+      phone: '',
+      isCustomized: false,
+      archetype: 'clinical',
+      fontHeading: 'font-clinical',
+      radiusPreset: 'bento',
+      motionPreset: 'slow-fade',
+    };
   });
 
   useEffect(() => {
@@ -40,13 +91,26 @@ export function LandingCustomizerProvider({ children }) {
     }));
   };
 
+  const setArchetype = (archetypeKey) => {
+    const config = ARCHETYPE_CONFIGS[archetypeKey] || ARCHETYPE_CONFIGS.clinical;
+    setCustomData((prev) => ({
+      ...prev,
+      ...config,
+    }));
+  };
+
   const applyCustomization = (data) => {
-    setCustomData({
+    setCustomData((prev) => ({
+      ...prev,
       businessName: data.businessName || '',
       city: data.city || '',
       phone: data.phone || '',
       isCustomized: Boolean(data.businessName || data.city),
-    });
+      archetype: data.archetype || prev.archetype || 'clinical',
+      fontHeading: data.fontHeading || prev.fontHeading || 'font-clinical',
+      radiusPreset: data.radiusPreset || prev.radiusPreset || 'bento',
+      motionPreset: data.motionPreset || prev.motionPreset || 'slow-fade',
+    }));
   };
 
   const resetCustomizer = () => {
@@ -55,6 +119,10 @@ export function LandingCustomizerProvider({ children }) {
       city: '',
       phone: '',
       isCustomized: false,
+      archetype: 'clinical',
+      fontHeading: 'font-clinical',
+      radiusPreset: 'bento',
+      motionPreset: 'slow-fade',
     });
     localStorage.removeItem(CUSTOMIZER_STORAGE_KEY);
   };
@@ -74,6 +142,7 @@ export function LandingCustomizerProvider({ children }) {
       value={{
         ...customData,
         updateCustomizer,
+        setArchetype,
         applyCustomization,
         resetCustomizer,
         submitLead,
@@ -92,7 +161,12 @@ export function useLandingCustomizer() {
       city: '',
       phone: '',
       isCustomized: false,
+      archetype: 'clinical',
+      fontHeading: 'font-clinical',
+      radiusPreset: 'bento',
+      motionPreset: 'slow-fade',
       updateCustomizer: () => {},
+      setArchetype: () => {},
       applyCustomization: () => {},
       resetCustomizer: () => {},
       submitLead: async () => {},

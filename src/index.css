@@ -219,3 +219,83 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ==========================================================================
+   ARQUETIPOS DE DISEÑO & GEOMETRÍAS (EVITA HOMOGENEIDAD "EFECTO PLANTILLA")
+   ========================================================================== */
+
+/* 1. Tipografías por nicho */
+.font-editorial {
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+}
+.font-editorial-modern {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+.font-brutalist {
+  font-family: 'Syne', sans-serif;
+}
+.font-brutalist-condensed {
+  font-family: 'Anton', sans-serif;
+}
+.font-brutalist-mono {
+  font-family: 'Space Grotesk', sans-serif;
+}
+.font-clinical {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.font-industrial {
+  font-family: 'Chakra Petch', sans-serif;
+}
+.font-industrial-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 2. Geometría y sombras por arquetipo */
+.theme-brutalist {
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0px #000;
+  border-radius: 0px;
+}
+.theme-brutalist-heavy {
+  border: 3px solid #000;
+  box-shadow: 7px 7px 0px #000;
+  border-radius: 0px;
+}
+
+.theme-editorial {
+  border-radius: 0px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+}
+
+.theme-clinical-bento {
+  border-radius: 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+}
+
+.theme-industrial {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+.theme-industrial-badge {
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+/* Sombras duras neo-brutalistas */
+.shadow-brutalist {
+  box-shadow: 6px 6px 0px #000000;
+}
+.shadow-brutalist-sm {
+  box-shadow: 3px 3px 0px #000000;
+}
+.shadow-brutalist-accent {
+  box-shadow: 6px 6px 0px #F59E0B;
+}
+
+/* Arcos editoriales para estética/spa */
+.rounded-arch-t {
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+}
+

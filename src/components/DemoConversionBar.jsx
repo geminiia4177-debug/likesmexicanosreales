@@ -2,35 +2,33 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   ArrowRight,
-  Eye,
-  Sliders,
-  Check,
   Zap,
-  ShoppingBag,
-  ExternalLink,
+  Check,
   ChevronDown,
+  ChevronUp,
   X,
-  MessageSquare,
-  ShieldCheck,
   Building2,
   MapPin,
-  Phone
+  Phone,
+  Eye,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
 import { useLandingCustomizer } from '../context/LandingCustomizerContext';
 import { SITE_CONFIG } from '../config/siteConfig';
 
 const DEMO_LIST = [
   { key: 'tequila', title: 'Tequila & Mezcal', icon: '🥃', color: 'from-amber-500 to-orange-600', sector: 'E-Commerce' },
-  { key: 'tacos', title: 'Taquería & Taquizas', icon: '🌮', color: 'from-red-500 to-amber-600', sector: 'Restaurante' },
-  { key: 'barberia', title: 'Barbería Clásica', icon: '💈', color: 'from-blue-600 to-indigo-700', sector: 'Belleza' },
-  { key: 'estetica', title: 'Salón & Nail Bar', icon: '💅', color: 'from-pink-500 to-rose-600', sector: 'Estética' },
-  { key: 'calzado', title: 'Calzado & Botas León', icon: '👢', color: 'from-amber-700 to-stone-800', sector: 'Moda' },
-  { key: 'taller', title: 'Taller Mecánico', icon: '🚗', color: 'from-slate-700 to-slate-900', sector: 'Mecánica' },
+  { key: 'tacos', title: 'Taquería Urbana', icon: '🌮', color: 'from-amber-400 to-yellow-500', sector: 'Street Food' },
+  { key: 'barberia', title: 'Barbería Clásica', icon: '💈', color: 'from-amber-700 to-yellow-900', sector: 'Club Privado' },
+  { key: 'estetica', title: 'Salón & Beauty Spa', icon: '💅', color: 'from-rose-400 to-pink-600', sector: 'Belleza' },
+  { key: 'calzado', title: 'Calzado & Sneaker Drop', icon: '👟', color: 'from-stone-700 to-stone-900', sector: 'Streetwear' },
+  { key: 'taller', title: 'Taller Mecánico', icon: '🚗', color: 'from-yellow-500 to-amber-600', sector: 'Industrial' },
   { key: 'cafe', title: 'Café de Especialidad', icon: '☕', color: 'from-amber-800 to-amber-950', sector: 'Cafetería' },
-  { key: 'veterinaria', title: 'Veterinaria & Pet Spa', icon: '🐾', color: 'from-emerald-500 to-teal-700', sector: 'Salud' },
-  { key: 'dental', title: 'Diseño de Sonrisa 3D', icon: '🦷', color: 'from-cyan-500 to-blue-600', sector: 'Dental' },
-  { key: 'tulum', title: 'Luxury Real Estate', icon: '🌴', color: 'from-emerald-600 to-emerald-900', sector: 'Bienes Raíces' },
-  { key: 'gym', title: 'Gimnasio & Crossfit', icon: '⚡', color: 'from-red-600 to-rose-800', sector: 'Fitness' },
+  { key: 'veterinaria', title: 'Veterinaria & Urgencias', icon: '🐾', color: 'from-emerald-500 to-teal-700', sector: 'Cuidado Animal' },
+  { key: 'dental', title: 'Diseño de Sonrisa 3D', icon: '🦷', color: 'from-cyan-500 to-blue-600', sector: 'Dental Bento' },
+  { key: 'tulum', title: 'Luxury Real Estate', icon: '🌴', color: 'from-stone-600 to-stone-800', sector: 'Quiet Luxury' },
+  { key: 'gym', title: 'Gimnasio & Crossfit', icon: '⚡', color: 'from-lime-500 to-emerald-600', sector: 'Kinetic Brutalism' },
 ];
 
 export default function DemoConversionBar({
@@ -42,6 +40,7 @@ export default function DemoConversionBar({
   const { businessName, city, phone, updateCustomizer, submitLead, isCustomized } = useLandingCustomizer();
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isDemoMenuOpen, setIsDemoMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const activeDemo = DEMO_LIST.find((d) => d.key === currentKey) || DEMO_LIST[0];
@@ -73,17 +72,35 @@ export default function DemoConversionBar({
     }
   };
 
+  // If user collapsed the bar to enjoy full immersion
+  if (isCollapsed) {
+    return (
+      <div className="fixed top-3 right-3 z-[90] flex items-center gap-2 animate-in fade-in zoom-in-90">
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-white text-xs font-bold border border-white/20 backdrop-blur-md shadow-2xl flex items-center gap-1.5 transition-all hover:scale-105"
+        >
+          <span>{activeDemo.icon}</span>
+          <span className="hidden sm:inline">{activeDemo.title}</span>
+          <Maximize2 className="w-3 h-3 text-[#00F59B]" />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <aside aria-label="Controlador de demostración interactiva" className="sticky top-0 z-[80] w-full bg-[#080B13]/95 backdrop-blur-xl border-b border-white/10 shadow-2xl transition-all">
+    <aside
+      aria-label="Controlador de demostración interactiva"
+      className="sticky top-0 z-[80] w-full bg-[#080B13]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl transition-all"
+    >
       {/* Top Banner Row */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2.5">
-        
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2">
         {/* Left: Current Sector & Switcher */}
         <div className="flex items-center gap-2">
           {onBackToAgency && (
             <button
               onClick={onBackToAgency}
-              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-all border border-white/10"
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-all border border-white/10"
               title="Volver a la agencia principal"
             >
               ← <span className="hidden sm:inline">Agencia</span>
@@ -94,11 +111,11 @@ export default function DemoConversionBar({
           <div className="relative">
             <button
               onClick={() => setIsDemoMenuOpen(!isDemoMenuOpen)}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-white text-xs font-bold flex items-center gap-2 border border-emerald-500/30 transition-all shadow-sm"
+              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold flex items-center gap-2 border border-white/15 transition-all shadow-sm"
             >
               <span className="text-sm">{activeDemo.icon}</span>
               <span className="font-extrabold">{activeDemo.title}</span>
-              <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+              <span className="text-[10px] bg-[#00F59B]/20 text-[#00F59B] px-1.5 py-0.5 rounded font-mono font-bold">
                 11 Demos
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -120,7 +137,7 @@ export default function DemoConversionBar({
                     }}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
                       demo.key === currentKey
-                        ? 'bg-emerald-500 text-black font-extrabold shadow'
+                        ? 'bg-[#00F59B] text-black font-extrabold shadow'
                         : 'text-slate-300 hover:bg-white/10'
                     }`}
                   >
@@ -148,12 +165,12 @@ export default function DemoConversionBar({
           )}
         </div>
 
-        {/* Center / Right: Quick Live Brand Customizer Toggle + CTAs */}
+        {/* Center / Right: Quick Live Brand Customizer Toggle + CTAs + Minimize */}
         <div className="flex items-center gap-2">
           {/* Toggle Brand Customizer drawer */}
           <button
             onClick={() => setIsCustomizerOpen(!isCustomizerOpen)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all border ${
+            className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all border ${
               isCustomizerOpen
                 ? 'bg-[#FF005C] text-white border-[#FF005C]'
                 : 'bg-white/5 hover:bg-white/10 text-white border-white/15'
@@ -167,21 +184,29 @@ export default function DemoConversionBar({
           {/* Buy Interacciones for this sector */}
           <button
             onClick={handleBuyInteractions}
-            className="hidden lg:flex px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-bold items-center gap-1.5 transition-all"
+            className="hidden lg:flex px-3 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-bold items-center gap-1.5 transition-all"
           >
             <Zap className="w-3.5 h-3.5 text-blue-400" />
-            <span>Paquete Likes {activeDemo.sector}</span>
+            <span>Paquete {activeDemo.sector}</span>
           </button>
 
           {/* Hot CTA: Buy this customized landing */}
           <button
             onClick={handleBuyLanding}
-            className="px-3.5 py-1.5 rounded-lg bg-[#00F59B] hover:bg-[#00d885] text-black text-xs font-black flex items-center gap-1.5 shadow-lg shadow-[#00F59B]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="px-3 py-1 rounded-lg bg-[#00F59B] hover:bg-[#00d885] text-black text-xs font-black flex items-center gap-1.5 shadow-lg shadow-[#00F59B]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <span className="hidden xs:inline">🔥 Adquirir Landing</span>
-            <span className="xs:hidden">🔥 Comprar</span>
+            <span>🔥 Adquirir Landing</span>
             <span className="hidden md:inline text-[10px] bg-black/20 px-1 py-0.5 rounded font-mono font-bold">48h</span>
             <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Collapse button */}
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+            title="Minimizar barra para ver pantalla completa"
+          >
+            <Minimize2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -270,7 +295,6 @@ export default function DemoConversionBar({
 
             <div className="flex flex-wrap items-center justify-between pt-3 mt-3 border-t border-white/10 text-[11px] text-slate-400">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#00F59B]" />
                 Los textos en el Hero, botones de WhatsApp y cotizadores se actualizan automáticamente en pantalla.
               </span>
               <button

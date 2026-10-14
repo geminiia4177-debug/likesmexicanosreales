@@ -14,127 +14,116 @@ import {
   Building2,
   DollarSign,
   ArrowRight,
-  Calculator
+  Calculator,
+  MapPin,
+  ChevronRight,
+  Maximize2
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLandingCustomizer } from '../context/LandingCustomizerContext';
 import DemoConversionBar from '../components/DemoConversionBar';
 
 export default function TulumRealEstateLanding({ onBack, onOpenCheckout, onSwitchDemo }) {
   const { businessName, city, phone } = useLandingCustomizer();
 
-  const brandName = businessName || "K'AAN Tulum Estates";
-  const brandCity = city || 'Aldea Zamá / Región 15, Tulum, Q.Roo';
+  const brandName = businessName || "K'AAN Tulum Sanctuary & Estates";
+  const brandCity = city || 'Región 15 & Aldea Zamá, Tulum, Q.Roo';
 
-  // 1. Currency Switcher (USD <-> MXN)
-  const [currency, setCurrency] = useState('USD'); // 'USD' or 'MXN'
-  const EXCHANGE_RATE = 19.5; // 1 USD = 19.50 MXN
+  // Currency Switcher
+  const [currency, setCurrency] = useState('USD');
+  const EXCHANGE_RATE = 19.5;
 
-  // 2. ROI Calculator State
-  const [nightsBooked, setNightsBooked] = useState(20);
-  const [dailyRateUSD, setDailyRateUSD] = useState(240); // USD
+  // Filter State
+  const [filterTypology, setFilterTypology] = useState('all');
+  const [filterDelivery, setFilterDelivery] = useState('all');
 
-  // 3. Tipología Activa
-  const [activeTypology, setActiveTypology] = useState('swim_up');
+  // ROI Calculator State
+  const [nightsBooked, setNightsBooked] = useState(21); // noches al mes
+  const [dailyRateUSD, setDailyRateUSD] = useState(280); // USD por noche
 
-  // 4. Simulador de Financiamiento Directo
-  const [downPaymentTier, setDownPaymentTier] = useState(30); // 30%, 50%, 80%
+  // Interactive Amenities Blueprint State
+  const [activeAmenity, setActiveAmenity] = useState('cenote');
 
-  const typologies = {
-    jungle_loft: {
-      name: 'Jungle Loft Garden (1 Recámara)',
-      usdPrice: 179000,
-      area: '68 m²',
-      desc: 'Plunge pool privada de chukum, terraza con vista a vegetación endémica y regadera exterior.',
+  const typologies = [
+    {
+      id: 'swim_up',
+      name: 'Sanctuary Swim-Up Villa',
+      specs: '2 Recámaras · 145 m² · Alberca Privada de Chukum',
+      usdPrice: 289000,
+      delivery: 'Inmediata',
+      roiEst: '14.8%',
+      image: '/images/tulum.webp',
     },
-    swim_up: {
-      name: 'Swim-up Condo Luxury (2 Recámaras)',
-      usdPrice: 245000,
-      area: '105 m²',
-      desc: 'Acceso directo desde tu terraza a canal de nado biofílico y lock-off para doble renta simultánea.',
+    {
+      id: 'penthouse',
+      name: 'Sky Rooftop Penthouse',
+      specs: '3 Recámaras · 220 m² · Solárium & Jacuzzi Privado',
+      usdPrice: 395000,
+      delivery: 'Diciembre 2026',
+      roiEst: '16.2%',
+      image: '/images/tulum.webp',
     },
-    penthouse: {
-      name: 'Sky Penthouse con Rooftop Privado (3 Rec)',
-      usdPrice: 340000,
-      area: '162 m²',
-      desc: 'Rooftop panorámico privado, alberca infinita con vista a la selva maya y asador teppanyaki.',
+    {
+      id: 'jungle_loft',
+      name: 'Jungle Bio-Loft',
+      specs: '1 Recámara · 85 m² · Vista Panorámica al Dosel',
+      usdPrice: 185000,
+      delivery: 'Verano 2027',
+      roiEst: '13.5%',
+      image: '/images/tulum.webp',
+    },
+  ];
+
+  const amenities = {
+    cenote: {
+      name: 'Cenote Privado Natural',
+      desc: 'Formación subterránea natural integrada al desarrollo con filtración orgánica y acceso exclusivo.',
+      coord: 'Zona Central Norte',
+    },
+    spa: {
+      name: 'Holistic Spa & Temazcal Ceremonial',
+      desc: 'Área de sanación sonora, masajes botánicos mayas y circuito hidrotermal bajo la selva.',
+      coord: 'Ala Poniente',
+    },
+    beachclub: {
+      name: 'Membresía Exclusiva Beach Club',
+      desc: 'Acceso VIP y camas reservadas frente al mar caribeño de Tulum con concierge 24/7.',
+      coord: 'Transportación privada incluida',
+    },
+    cowork: {
+      name: 'Jungle Atelier & Coworking de Fibra Óptica',
+      desc: 'Starlink de alta velocidad, salas privadas y cafetería de especialidad chiapaneca.',
+      coord: 'Pabellón Principal',
     },
   };
 
-  const currentUnit = typologies[activeTypology];
-
-  // Helper to format currency
-  const formatMoney = (usdVal) => {
-    if (currency === 'USD') {
-      return `$${usdVal.toLocaleString('en-US')} USD`;
+  const formatPrice = (usd) => {
+    if (currency === 'MXN') {
+      const mxn = usd * EXCHANGE_RATE;
+      return `$${mxn.toLocaleString('es-MX')} MXN`;
     }
-    const mxnVal = Math.round(usdVal * EXCHANGE_RATE);
-    return `$${mxnVal.toLocaleString('es-MX')} MXN`;
+    return `$${usd.toLocaleString('en-US')} USD`;
   };
 
-  // Financing discounts based on down payment
-  const discountRate = downPaymentTier === 80 ? 0.08 : downPaymentTier === 50 ? 0.04 : 0;
-  const listPriceUSD = currentUnit.usdPrice;
-  const finalPriceUSD = Math.round(listPriceUSD * (1 - discountRate));
-  const downPaymentAmountUSD = Math.round(finalPriceUSD * (downPaymentTier / 100));
-  const duringConstructionUSD = Math.round(finalPriceUSD * 0.40); // 40% durante obra
-  const onDeliveryUSD = Math.max(0, finalPriceUSD - downPaymentAmountUSD - duringConstructionUSD);
-
-  // ROI calculations
+  // ROI Math
   const monthlyGrossUSD = nightsBooked * dailyRateUSD;
   const annualGrossUSD = monthlyGrossUSD * 12;
-  const netAnnualUSD = Math.round(annualGrossUSD * 0.72); // 72% net after property management
-  const capRate = ((netAnnualUSD / listPriceUSD) * 100).toFixed(1);
+  const netOperatingIncomeUSD = annualGrossUSD * 0.72; // 28% HOA & PM fee
+  const selectedUnit = typologies[0];
+  const capRate = ((netOperatingIncomeUSD / selectedUnit.usdPrice) * 100).toFixed(1);
 
-  // Download Financial Corrida simulation
-  const handleDownloadFinancialRun = () => {
-    const textContent = `
-=====================================================
-CORRIDA FINANCIERA & PROYECCIÓN DE PLUSVALÍA 2026
-DESARROLLO: ${brandName.toUpperCase()}
-UBICACIÓN: ${brandCity}
-=====================================================
-Fecha: ${new Date().toLocaleDateString('es-MX')}
-Unidad Seleccionada: ${currentUnit.name}
-Superficie: ${currentUnit.area}
-Tipo de Cambio Referencial: 1 USD = $${EXCHANGE_RATE} MXN
-
-ESTRUCTURA DE COMPRA FINANCIADA:
-• Precio de Lista Oficial: ${formatMoney(listPriceUSD)}
-• Descuento por Pronto Pago (${(discountRate * 100)}%): -${formatMoney(listPriceUSD - finalPriceUSD)}
-• PRECIO FINAL DE ADQUISICIÓN: ${formatMoney(finalPriceUSD)}
-
-ESQUEMA DE PAGOS:
-1. Enganche Inicial (${downPaymentTier}%): ${formatMoney(downPaymentAmountUSD)}
-2. Mensualidades durante obra (40% en 18 meses): ${formatMoney(duringConstructionUSD)} (~${formatMoney(Math.round(duringConstructionUSD / 18))} / mes)
-3. Saldo Contra-Entrega Llave en Mano (2026): ${formatMoney(onDeliveryUSD)}
-
-PROYECCIÓN DE RETORNO (CAP RATE):
-• Ocupación proyectada: ${nightsBooked} noches/mes (~${Math.round((nightsBooked / 30) * 100)}% anual)
-• Tarifa promedio diaria: ${formatMoney(dailyRateUSD)} / noche
-• Ingreso Anual Neto Proyectado: ${formatMoney(netAnnualUSD)}
-• Cap Rate Anual Estimado: ${capRate}% NETO
-=====================================================
-Para apartar tu unidad con $5,000 USD reembolsables, contáctanos a través de tu asesor AMPI.
-    `.trim();
-
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Corrida_Financiera_${currentUnit.name.replace(/\s+/g, '_')}_${currency}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const handleBrochure = () => {
+    const wa = phone ? phone.replace(/\D/g, '') : '525512345678';
+    window.open(
+      `https://wa.me/${wa}?text=${encodeURIComponent(
+        `Hola ${brandName}, deseo recibir el Dossier de Inversión y Masterplan Privado en PDF de ${brandCity}.`
+      )}`,
+      '_blank'
+    );
   };
 
-  const whatsappMessage = encodeURIComponent(
-    `¡Hola ${brandName} 🌴! Deseo apartar información sobre ${currentUnit.name}:\n\n• Moneda: ${currency}\n• Precio con descuento: ${formatMoney(finalPriceUSD)}\n• Esquema de enganche: ${downPaymentTier}% (${formatMoney(downPaymentAmountUSD)})\n• Cap Rate proyectado: ${capRate}%\n• Ubicación: ${brandCity}\n\n¿Me pueden enviar el Master Plan y disponibilidad de entrega 2026?`
-  );
-
   return (
-    <div className="min-h-screen bg-[#070B0D] text-[#E2EBE9] font-sans selection:bg-teal-500/30 relative pb-16">
-      {/* Demo Conversion Bar */}
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E1C1A] font-clinical selection:bg-[#2C2926] selection:text-[#FDFBF7]">
       <DemoConversionBar
         currentKey="tulum"
         onSwitchDemo={onSwitchDemo}
@@ -142,265 +131,366 @@ Para apartar tu unidad con $5,000 USD reembolsables, contáctanos a través de t
         onOpenCheckout={onOpenCheckout}
       />
 
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-stone-900 text-teal-200 text-xs sm:text-sm py-2 px-4 text-center font-medium border-b border-teal-800/40 flex items-center justify-center gap-2">
-        <Sparkles className="w-4 h-4 text-teal-400" />
-        <span>Pre-Venta Fase 2 Exclusiva en {brandCity} • Entrega 2026 • Financiamiento Directo a Desarrollador</span>
+      {/* TOP NOTIFICATION BAR - EDITORIAL MINIMAL */}
+      <div className="border-b border-[#E8E4DC] px-4 py-2 text-[11px] uppercase tracking-[0.25em] text-[#6E6A64] flex items-center justify-between font-mono">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-[#2C2926] inline-block"></span>
+          <span>{brandCity}</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => setCurrency(currency === 'USD' ? 'MXN' : 'USD')}
+            className="hover:text-black transition-colors font-bold tracking-widest text-[10px]"
+          >
+            MONEDA: [{currency}] (CAMBIAR)
+          </button>
+          <span className="hidden sm:inline">ENTREGA INMEDIATA & PREVENTA 2026</span>
+        </div>
       </div>
 
-      {/* Header */}
-      <header className="sticky top-[49px] z-40 bg-[#070B0D]/90 backdrop-blur-md border-b border-teal-900/30 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* HERO SECTION - 100vh FULL-SCREEN EDITORIAL LUXURY */}
+      <section className="relative h-[92vh] min-h-[640px] w-full overflow-hidden flex flex-col justify-between border-b border-[#E8E4DC]">
+        {/* Full-bleed background image with subtle warm tone */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/tulum.webp"
+            alt={brandName}
+            className="w-full h-full object-cover filter brightness-[0.78] contrast-[1.05]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30" />
+        </div>
+
+        {/* Minimal Editorial Header */}
+        <div className="relative z-10 px-6 sm:px-12 pt-8 flex items-center justify-between text-white">
+          <span className="text-xs uppercase tracking-[0.3em] font-mono opacity-80">
+            Architectural Digest Featured · Tulum 2026
+          </span>
           <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs text-teal-300 border border-teal-500/30 flex items-center gap-1.5 transition-colors"
-              >
-                ← Volver al Portal
-              </button>
-            )}
-            <div className="flex items-center gap-2">
-              <Palmtree className="w-6 h-6 text-teal-400" />
-              <span className="font-serif tracking-widest text-lg sm:text-xl font-bold text-teal-100 uppercase">
-                {brandName}
-              </span>
-            </div>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm text-stone-300">
-            <a href="#tipologias" className="hover:text-teal-300 transition-colors">Tipologías</a>
-            <a href="#financiamiento" className="hover:text-teal-300 transition-colors">Financiamiento</a>
-            <a href="#roi" className="hover:text-teal-300 transition-colors">Calculadora ROI</a>
-          </div>
-
-          {/* 1. Currency Switcher Pill */}
-          <div className="flex items-center gap-2">
-            <div className="flex bg-black/60 p-1 rounded-xl border border-teal-500/30 text-xs font-mono">
-              <button
-                onClick={() => setCurrency('USD')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                  currency === 'USD' ? 'bg-teal-500 text-stone-950 shadow' : 'text-stone-400 hover:text-white'
-                }`}
-              >
-                USD $
-              </button>
-              <button
-                onClick={() => setCurrency('MXN')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                  currency === 'MXN' ? 'bg-teal-500 text-stone-950 shadow' : 'text-stone-400 hover:text-white'
-                }`}
-              >
-                MXN $
-              </button>
-            </div>
+            <button
+              onClick={handleBrochure}
+              className="text-xs uppercase tracking-[0.2em] underline underline-offset-4 hover:opacity-80 transition-opacity"
+            >
+              Solicitar Dossier Confidencial
+            </button>
           </div>
         </div>
-      </header>
 
-      {/* Hero */}
-      <section className="relative pt-12 pb-20 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-950/60 border border-teal-600/40 text-teal-300 text-xs font-semibold">
-              <Compass className="w-4 h-4" /> {brandCity}
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl font-serif font-black text-stone-50 leading-[1.1] tracking-tight">
-              Arquitectura ancestral, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-emerald-400 to-amber-300">
-                rentabilidad garantizada
-              </span>
-            </h1>
-
-            <p className="text-stone-300 text-base sm:text-lg leading-relaxed max-w-xl font-light">
-              Condominios boutique sustentables con acabados en chukum, alberca privada tipo plunge pool y acceso a cenote sagrado natural en {brandCity}.
+        {/* Bottom Editorial Serif Typography & Property Search Bar */}
+        <div className="relative z-10 px-6 sm:px-12 pb-12 max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="text-[#C4BDB3] text-xs sm:text-sm uppercase tracking-[0.35em] font-mono mb-3">
+              Residencias Bio-Arquitectónicas en Selva
             </p>
+            <h1 className="font-editorial text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white font-normal leading-[0.92] tracking-tight max-w-4xl mb-8">
+              {brandName}
+            </h1>
+          </motion.div>
 
-            <div className="grid grid-cols-3 gap-3 max-w-lg pt-2 text-center">
-              <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-teal-900/40">
-                <span className="block text-2xl font-black text-teal-400">{capRate}%</span>
-                <span className="text-[11px] text-stone-400 uppercase tracking-wider">Cap Rate Anual</span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-teal-900/40">
-                <span className="block text-2xl font-black text-teal-400">{formatMoney(179000).split(' ')[0]}</span>
-                <span className="text-[11px] text-stone-400 uppercase tracking-wider">Pre-Venta Desde</span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-teal-900/40">
-                <span className="block text-2xl font-black text-teal-400">AMPI</span>
-                <span className="text-[11px] text-stone-400 uppercase tracking-wider">Certeza Jurídica</span>
+          {/* Minimalist Property Filter Bar (Zero Radius) */}
+          <div className="bg-[#1E1C1A]/90 backdrop-blur-md border border-[#3E3A35] p-3 sm:p-4 text-white grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+            <div className="border-b sm:border-b-0 sm:border-r border-[#3E3A35] pb-2 sm:pb-0 sm:pr-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#9E988F] font-mono block mb-1">
+                Tipología
+              </label>
+              <select
+                value={filterTypology}
+                onChange={(e) => setFilterTypology(e.target.value)}
+                className="bg-transparent text-xs text-white uppercase tracking-wider outline-none w-full font-editorial cursor-pointer"
+              >
+                <option value="all" className="bg-[#1E1C1A]">Todas las Unidades (1, 2 y 3 Rec.)</option>
+                <option value="swim_up" className="bg-[#1E1C1A]">Swim-Up Villa</option>
+                <option value="penthouse" className="bg-[#1E1C1A]">Rooftop Penthouse</option>
+                <option value="jungle_loft" className="bg-[#1E1C1A]">Jungle Bio-Loft</option>
+              </select>
+            </div>
+
+            <div className="border-b sm:border-b-0 sm:border-r border-[#3E3A35] pb-2 sm:pb-0 sm:pr-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#9E988F] font-mono block mb-1">
+                Fase de Entrega
+              </label>
+              <select
+                value={filterDelivery}
+                onChange={(e) => setFilterDelivery(e.target.value)}
+                className="bg-transparent text-xs text-white uppercase tracking-wider outline-none w-full font-editorial cursor-pointer"
+              >
+                <option value="all" className="bg-[#1E1C1A]">Todas las Fases</option>
+                <option value="immediate" className="bg-[#1E1C1A]">Inmediata (Llave en Mano)</option>
+                <option value="presale" className="bg-[#1E1C1A]">Preventa (2026 - 2027)</option>
+              </select>
+            </div>
+
+            <div className="border-b sm:border-b-0 sm:border-r border-[#3E3A35] pb-2 sm:pb-0 sm:pr-3">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-[#9E988F] font-mono block mb-1">
+                Rango Inversión
+              </label>
+              <div className="text-xs font-mono text-[#D4CDC3]">
+                {currency === 'USD' ? 'Desde $185,000 USD' : 'Desde $3,607,500 MXN'}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 pt-2">
-              <a
-                href="#financiamiento"
-                className="px-6 py-3.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg"
-              >
-                <span>Simular Financiamiento Directo</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
-
-              <button
-                onClick={handleDownloadFinancialRun}
-                className="px-5 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-teal-300 border border-teal-500/30 font-bold text-xs uppercase tracking-wider flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Descargar Corrida Financiera</span>
-              </button>
-            </div>
+            <button
+              onClick={handleBrochure}
+              className="w-full bg-[#FAF7F0] hover:bg-white text-[#1E1C1A] py-2.5 px-4 text-xs uppercase tracking-[0.2em] font-semibold transition-all flex items-center justify-center gap-2"
+            >
+              <span>Ver Disponibilidad</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
+        </div>
+      </section>
 
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-teal-500/30 shadow-[0_20px_70px_rgba(20,184,166,0.25)]">
-              <img
-                src="/images/tulum.webp"
-                alt="Luxury Real Estate Tulum"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-[460px] object-cover"
+      {/* SECTION 2: EXCLUSIVE INTERACTIVE ROI CALCULATOR (USD VACATION RENTAL) */}
+      <section className="py-20 px-6 sm:px-12 border-b border-[#E8E4DC] max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div>
+            <span className="text-xs uppercase tracking-[0.3em] text-[#7C776F] font-mono block mb-2">
+              Proyección Financiera Validada
+            </span>
+            <h2 className="font-editorial text-3xl sm:text-5xl font-normal tracking-tight text-[#1E1C1A]">
+              Simulador de Rendimiento por Rentas Vacacionales
+            </h2>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-mono text-[#7C776F] uppercase">Rendimiento Estimado</span>
+            <div className="font-editorial text-4xl text-[#1E1C1A]">{capRate}% Cap Rate Neto</div>
+          </div>
+        </div>
+
+        {/* Two-Column Calculator & Results Box (Zero Border Radius) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 border border-[#E8E4DC] bg-white">
+          {/* Controls (7 Cols) */}
+          <div className="lg:col-span-7 p-6 sm:p-10 border-b lg:border-b-0 lg:border-r border-[#E8E4DC]">
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-widest font-mono text-[#5A5650]">
+                  Tarifa Promedio por Noche en Airbnb / VRBO (USD)
+                </span>
+                <span className="font-editorial text-2xl font-bold">${dailyRateUSD} USD</span>
+              </div>
+              <input
+                type="range"
+                min="180"
+                max="650"
+                step="10"
+                value={dailyRateUSD}
+                onChange={(e) => setDailyRateUSD(Number(e.target.value))}
+                className="w-full accent-[#1E1C1A] cursor-pointer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#070B0D] via-transparent to-transparent opacity-60" />
+              <div className="flex justify-between text-[10px] text-[#999] font-mono mt-1">
+                <span>$180 USD (Temporada Baja)</span>
+                <span>$400 USD (Media)</span>
+                <span>$650 USD (Temporada Alta)</span>
+              </div>
             </div>
+
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-widest font-mono text-[#5A5650]">
+                  Ocupación Mensual (Noches reservadas)
+                </span>
+                <span className="font-editorial text-2xl font-bold">{nightsBooked} Noches ({(nightsBooked / 30 * 100).toFixed(0)}%)</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="28"
+                step="1"
+                value={nightsBooked}
+                onChange={(e) => setNightsBooked(Number(e.target.value))}
+                className="w-full accent-[#1E1C1A] cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-[#999] font-mono mt-1">
+                <span>10 Noches (33%)</span>
+                <span>20 Noches (67%)</span>
+                <span>28 Noches (93%)</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#F8F5EE] border border-[#E8E4DC] text-xs text-[#5A5650] leading-relaxed">
+              * El modelo contempla una tarifa de administración profesional de propiedad (Property Management) del 20% y cuota de mantenimiento de amenidades del 8%.
+            </div>
+          </div>
+
+          {/* Results Summary (5 Cols) */}
+          <div className="lg:col-span-5 p-6 sm:p-10 bg-[#FAF7F0] flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.25em] font-mono text-[#7C776F] block mb-4">
+                Desglose Anual Proyectado (Unidad {selectedUnit.name})
+              </span>
+              <div className="space-y-4 border-b border-[#E8E4DC] pb-6 mb-6">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#6E6A64]">Ingreso Bruto Mensual:</span>
+                  <span className="font-mono font-bold">${monthlyGrossUSD.toLocaleString()} USD</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#6E6A64]">Ingreso Bruto Anual:</span>
+                  <span className="font-mono font-bold">${annualGrossUSD.toLocaleString()} USD</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-bold text-[#1E1C1A] pt-2">
+                  <span>Flujo Neto Anual Estimado:</span>
+                  <span className="font-editorial text-2xl text-[#1E1C1A]">${Math.round(netOperatingIncomeUSD).toLocaleString()} USD</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleBrochure}
+              className="w-full bg-[#1E1C1A] hover:bg-black text-white py-3.5 px-6 text-xs uppercase tracking-[0.25em] font-semibold transition-all flex items-center justify-center gap-2"
+            >
+              <span>Descargar Modelo Financiero Completo</span>
+              <Download className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Tipologías Section */}
-      <section id="tipologias" className="py-16 px-6 bg-[#0B1013] border-t border-teal-900/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div>
-              <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">Master Plan 2026</span>
-              <h2 className="text-3xl font-serif font-black text-white mt-1">Tipologías Residenciales</h2>
-            </div>
-            <div className="flex bg-black/60 p-1 rounded-xl border border-white/10">
-              {Object.entries(typologies).map(([k, u]) => (
+      {/* SECTION 3: INTERACTIVE BLUEPRINT & AMENITIES PLAN */}
+      <section className="py-20 px-6 sm:px-12 border-b border-[#E8E4DC] max-w-7xl mx-auto">
+        <div className="mb-12">
+          <span className="text-xs uppercase tracking-[0.3em] text-[#7C776F] font-mono block mb-2">
+            Masterplan 2.4 Hectáreas
+          </span>
+          <h2 className="font-editorial text-3xl sm:text-5xl font-normal tracking-tight text-[#1E1C1A]">
+            Plano Interactivo de Amenidades y Bio-Conservación
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 border border-[#E8E4DC]">
+          {/* Amenity Buttons List (5 Cols) */}
+          <div className="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-[#E8E4DC] divide-y divide-[#E8E4DC] bg-white">
+            {Object.keys(amenities).map((key) => {
+              const item = amenities[key];
+              const isSelected = activeAmenity === key;
+              return (
                 <button
-                  key={k}
-                  onClick={() => setActiveTypology(k)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                    activeTypology === k ? 'bg-teal-500 text-stone-950 shadow' : 'text-stone-400 hover:text-white'
+                  key={key}
+                  onClick={() => setActiveAmenity(key)}
+                  className={`w-full text-left p-6 transition-all flex items-start justify-between ${
+                    isSelected ? 'bg-[#FAF7F0]' : 'hover:bg-[#FDFBF7]'
                   }`}
                 >
-                  {u.name.split(' ')[0]} {u.name.split(' ')[1]}
+                  <div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#8C877E] block mb-1">
+                      {item.coord}
+                    </span>
+                    <h4 className="font-editorial text-xl font-bold text-[#1E1C1A] mb-2">{item.name}</h4>
+                    <p className="text-xs text-[#6A655E] leading-relaxed line-clamp-2">{item.desc}</p>
+                  </div>
+                  <span className={`text-lg font-mono ml-3 ${isSelected ? 'text-black' : 'text-[#CCC]'}`}>
+                    →
+                  </span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
-          <div className="p-6 sm:p-8 rounded-3xl bg-stone-900/70 border border-teal-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <span className="px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 font-mono text-xs font-bold">
-                {currentUnit.area} Interiores + Plunge Pool
+          {/* Interactive Visual Blueprint Display (7 Cols) */}
+          <div className="lg:col-span-7 bg-[#23201D] text-white p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+            <div className="relative z-10">
+              <span className="text-[10px] uppercase tracking-[0.3em] font-mono text-[#A8A196] block mb-3">
+                Especificación Arquitectónica
               </span>
-              <h3 className="text-2xl font-serif font-black text-white mt-2">{currentUnit.name}</h3>
-              <p className="text-xs text-stone-300 max-w-lg mt-1">{currentUnit.desc}</p>
-            </div>
-
-            <div className="text-center md:text-right flex-shrink-0">
-              <span className="text-xs text-stone-400 block">Valor de Lista ({currency}):</span>
-              <div className="font-mono text-3xl sm:text-4xl font-black text-teal-400">
-                {formatMoney(currentUnit.usdPrice)}
-              </div>
-              <span className="text-[10px] text-stone-500 block">Llave en mano con equipamiento completo</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Simulador de Financiamiento Directo */}
-      <section id="financiamiento" className="py-20 px-6 max-w-4xl mx-auto">
-        <div className="p-6 sm:p-8 rounded-3xl bg-stone-900/90 border border-teal-500/40 shadow-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800 pb-5">
-            <div>
-              <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">
-                Sin Buró de Crédito • Trato Directo
-              </span>
-              <h3 className="text-2xl font-serif font-black text-white">
-                Simulador de Financiamiento en Obra
+              <h3 className="font-editorial text-3xl sm:text-4xl font-normal mb-4 text-[#F5F2EB]">
+                {amenities[activeAmenity].name}
               </h3>
+              <p className="text-sm text-[#C8C2B7] leading-relaxed max-w-lg mb-8 font-light">
+                {amenities[activeAmenity].desc}
+              </p>
             </div>
 
-            {/* Down Payment Tiers */}
-            <div className="flex gap-2">
-              {[30, 50, 80].map((tier) => (
-                <button
-                  key={tier}
-                  onClick={() => setDownPaymentTier(tier)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border ${
-                    downPaymentTier === tier
-                      ? 'bg-teal-500 text-stone-950 border-teal-500 shadow'
-                      : 'bg-white/5 text-stone-400 border-white/10 hover:text-white'
-                  }`}
-                >
-                  Enganche {tier}% {tier === 80 ? '(-8% OFF)' : tier === 50 ? '(-4% OFF)' : ''}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-black/50 border border-stone-800">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">Enganche Inicial ({downPaymentTier}%)</span>
-              <span className="font-mono text-lg font-black text-teal-400 mt-1 block">
-                {formatMoney(downPaymentAmountUSD)}
-              </span>
-              <span className="text-[10px] text-stone-500 block">Al firmar contrato de promesa</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-black/50 border border-stone-800">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">40% en Obra (18 Meses)</span>
-              <span className="font-mono text-lg font-black text-white mt-1 block">
-                {formatMoney(duringConstructionUSD)}
-              </span>
-              <span className="text-[10px] text-stone-500 block">~{formatMoney(Math.round(duringConstructionUSD / 18))} / mes</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-black/50 border border-stone-800">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">Saldo a la Entrega 2026</span>
-              <span className="font-mono text-lg font-black text-amber-400 mt-1 block">
-                {formatMoney(onDeliveryUSD)}
-              </span>
-              <span className="text-[10px] text-stone-500 block">Recurso propio o crédito bancario</span>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <span className="text-xs text-stone-400">Precio Total Adquisición con Descuento:</span>
-              <div className="font-mono text-2xl font-black text-white">
-                {formatMoney(finalPriceUSD)}
+            {/* Architectural diagram graphic */}
+            <div className="relative z-10 border border-[#4A453F] p-4 bg-[#1A1816]/70 flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#00F59B] animate-pulse"></span>
+                <span>UBICACIÓN: {amenities[activeAmenity].coord}</span>
               </div>
-            </div>
-
-            <div className="flex gap-2.5 w-full sm:w-auto">
               <button
-                type="button"
-                onClick={handleDownloadFinancialRun}
-                className="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 border border-white/15"
+                onClick={handleBrochure}
+                className="text-xs underline hover:text-[#00F59B] transition-colors"
               >
-                <Download className="w-4 h-4 text-teal-400" />
-                <span>Descargar Corrida</span>
+                Solicitar renders en alta resolución
               </button>
-
-              <a
-                href={`https://wa.me/${phone?.replace(/\D/g, '') || '5215512345678'}?text=${whatsappMessage}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg"
-              >
-                <span>Apartar Unidad</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 text-center text-xs text-stone-500 border-t border-teal-900/30">
-        <p>© 2026 {brandName} • Bienes Raíces Sustentables en {brandCity}.</p>
+      {/* SECTION 4: TYPOLOGIES GALLERY WITH FINE LINES */}
+      <section className="py-20 px-6 sm:px-12 border-b border-[#E8E4DC] max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <span className="text-xs uppercase tracking-[0.3em] text-[#7C776F] font-mono block mb-2">
+              Colección Residencial
+            </span>
+            <h2 className="font-editorial text-3xl sm:text-5xl font-normal tracking-tight text-[#1E1C1A]">
+              Unidades Disponibles en Aldea Zamá
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {typologies.map((unit) => (
+            <div
+              key={unit.id}
+              className="border border-[#E8E4DC] bg-white group hover:border-[#1E1C1A] transition-all"
+            >
+              <div className="aspect-[4/3] overflow-hidden relative">
+                <img
+                  src={unit.image}
+                  alt={unit.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute top-3 left-3 bg-[#1E1C1A] text-white text-[10px] font-mono px-2 py-1 uppercase tracking-widest">
+                  {unit.delivery}
+                </div>
+              </div>
+              <div className="p-6">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#7C776F] block mb-1">
+                  Retorno Proyectado {unit.roiEst}
+                </span>
+                <h3 className="font-editorial text-2xl font-bold text-[#1E1C1A] mb-2">{unit.name}</h3>
+                <p className="text-xs text-[#6A655E] mb-4">{unit.specs}</p>
+                <div className="flex items-center justify-between border-t border-[#E8E4DC] pt-4">
+                  <span className="font-editorial text-xl font-bold text-[#1E1C1A]">
+                    {formatPrice(unit.usdPrice)}
+                  </span>
+                  <button
+                    onClick={handleBrochure}
+                    className="text-xs font-mono uppercase tracking-widest underline hover:text-black transition-colors"
+                  >
+                    Ficha Técnica →
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER - SILENT LUXURY EDITORIAL */}
+      <footer className="py-16 px-6 sm:px-12 bg-[#1A1816] text-[#A8A196] text-xs font-mono">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-[#35302B] pb-12 mb-8">
+          <div>
+            <h3 className="font-editorial text-3xl text-white mb-2">{brandName}</h3>
+            <p className="text-xs text-[#7A746B]">
+              Desarrollos respaldados con escritura pública y fideicomiso bancario en Quintana Roo.
+            </p>
+          </div>
+          <button
+            onClick={handleBrochure}
+            className="bg-white text-black px-6 py-3 uppercase tracking-[0.2em] font-semibold hover:bg-[#FAF7F0] transition-colors"
+          >
+            Agendar Visita a Showroom Privado
+          </button>
+        </div>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between text-[10px] text-[#6A655E] gap-4">
+          <span>© 2026 {brandName} · Aldea Zamá / Región 15, Tulum</span>
+          <span>DISEÑO EDITORIAL ARQUITECTÓNICO · LIKES MEXICANOS REALES</span>
+        </div>
       </footer>
     </div>
   );

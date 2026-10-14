@@ -6,150 +6,93 @@ import {
   Clock,
   MapPin,
   Phone,
-  Calendar,
-  Users,
   ShoppingBag,
-  Sparkles,
-  CheckCircle2,
-  FileText,
-  Download,
   Plus,
   Minus,
   Trash2,
-  X,
-  ArrowRight
+  ArrowRight,
+  Check,
+  Zap,
+  RotateCcw
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLandingCustomizer } from '../context/LandingCustomizerContext';
 import DemoConversionBar from '../components/DemoConversionBar';
 
 export default function TacosLanding({ onBack, onOpenCheckout, onSwitchDemo }) {
   const { businessName, city, phone } = useLandingCustomizer();
 
-  const brandName = businessName || 'El Pastor Sagrado';
-  const brandCity = city || 'Roma Norte & Condesa, CDMX';
+  const brandName = businessName || 'Los Auténticos del Pastor Sagrado';
+  const brandCity = city || 'Roma Norte · Condesa · Narvarte, CDMX';
 
-  const [activeTab, setActiveTab] = useState('trompo');
-  const [guestCount, setGuestCount] = useState(35);
-  const [reservationSent, setReservationSent] = useState(false);
-  const [reservation, setReservation] = useState({ name: '', date: '', time: '20:00', people: '2' });
+  const [activeMenuTab, setActiveMenuTab] = useState('tacos');
+  const [orderItems, setOrderItems] = useState([
+    { id: 'pastor', name: 'Taco de Pastor con Piña (Orden 3)', price: 95, qty: 2 },
+    { id: 'suadero', name: 'Taco de Suadero Confitado', price: 38, qty: 3 },
+  ]);
+  const [selectedSalsa, setSelectedSalsa] = useState('Habanero Tatemado 🔥🔥🔥');
 
-  // 1. Delivery Cart State
-  const [deliveryCart, setDeliveryCart] = useState([]);
-  const [selectedSauce, setSelectedSauce] = useState('Habanero Tatemado');
-  const [selectedColonia, setSelectedColonia] = useState('Roma Norte');
-  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
-
-  const COLONIA_DELIVERY_FEES = {
-    'Roma Norte': 35,
-    'Condesa': 40,
-    'Del Valle': 50,
-    'Narvarte': 45,
-    'Juárez': 40,
-    'Polanco': 65,
-  };
-
-  const menu = {
-    trompo: [
-      { id: 't1', name: 'Taco al Pastor Tradicional', desc: 'Carne marinada con achiote yucateco, piña miel asada, cilantro y cebolla.', price: 35, popular: false },
-      { id: 't2', name: 'Costra de Pastor con Queso Menonita', desc: 'Chicharrón crujiente de queso fundido relleno de pastor jugoso en harina.', price: 85, popular: true },
-      { id: 't3', name: 'Volcán de Pastor Negro Oaxaqueño', desc: 'Tostada raspada al comal con frijoles refritos con hoja de aguacate.', price: 78, popular: false },
-      { id: 't4', name: 'Gringa Monumental de Pastor', desc: 'Doble tortilla de harina con queso Chihuahua derretido, pastor y piña.', price: 95, popular: false },
+  const menuItems = {
+    tacos: [
+      { id: 'pastor', name: 'Taco de Pastor con Piña (Orden 3)', desc: 'Carne adobada en trompo de carbón, cilantro fresco y piña miel', price: 95 },
+      { id: 'suadero', name: 'Taco de Suadero Confitado', desc: 'Cocido 8 horas en comal de cobre, suave y crujiente en las orillas', price: 38 },
+      { id: 'costilla', name: 'Volcán de Costilla con Queso Oaxaca', desc: 'Tortilla de maíz tatemada con costra de queso fundido y aguacate', price: 55 },
+      { id: 'campechano', name: 'Taco Campechano (Bistec + Chicharrón)', desc: 'Combinación tradicional con chicharrón prensado crujiente', price: 42 },
     ],
-    cortes: [
-      { id: 'c1', name: 'Taco de Rib Eye con Tuétano Asado', desc: 'Corte Prime al carbón con tuétano a las brasas y sal marina de Colima.', price: 145, popular: true },
-      { id: 'c2', name: 'Arrachera Marinada con Cebollitas', desc: 'Arrachera suave al carbón de mezquite con chiles toreados.', price: 85, popular: false },
-      { id: 'c3', name: 'Gaonera de Filete con Chicharrón', desc: 'Filete de res a la plancha con polvo crocante de chicharrón de la Ramos.', price: 110, popular: false },
+    paquetes: [
+      { id: 'paquete_taquero', name: '🔥 Paquete Taquero Familiar (20 Tacos)', desc: '10 Pastor + 5 Suadero + 5 Bistec + 1 Litro de Agua de Horchata', price: 480 },
+      { id: 'paquete_amigos', name: '🔥 Combo Taquiza Godín (12 Tacos)', desc: '6 Pastor + 6 Suadero + Frijoles Charros con tocino', price: 290 },
+      { id: 'combo_quesos', name: 'Combo Gringas & Costras (4 Piezas)', desc: '2 Gringas de pastor en harina + 2 Volcanes con queso menonita', price: 220 },
     ],
-    mezcal: [
-      { id: 'm1', name: 'Paloma Negra con Sal de Gusano', desc: 'Tequila blanco, toronja natural, carbón activado y escarchado de sal de chinicuil.', price: 160, popular: false },
-      { id: 'm2', name: 'Mezcalita de Maracuyá & Habanero', desc: 'Mezcal Espadín oaxaqueño, pulpa de maracuyá fresca y toque ligero de habanero.', price: 175, popular: true },
-      { id: 'm3', name: 'Carajillo Mazapán Azteca', desc: 'Licor 43, espresso chiapaneco y crema de mazapán tradicional de la Rosa.', price: 180, popular: false },
+    bebidas: [
+      { id: 'horchata', name: 'Agua de Horchata con Canela (1 Litro)', desc: 'Arroz remojado artesanal con toque de vainilla de Papantla', price: 65 },
+      { id: 'jamaica', name: 'Agua de Jamaica Criolla (1 Litro)', desc: 'Flor de jamaica de Colima, ligera y refrescante', price: 65 },
+      { id: 'boing', name: 'Boing de Guayaba o Mango en Vidrio', desc: 'El clásico refresco de taquería en botella de vidrio', price: 35 },
     ],
   };
 
-  // Add item to delivery cart
-  const handleAddDish = (dish) => {
-    setDeliveryCart((prev) => {
-      const idx = prev.findIndex((i) => i.id === dish.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx].qty += 1;
-        return copy;
+  const addItemToOrder = (item) => {
+    setOrderItems((prev) => {
+      const exists = prev.find((i) => i.id === item.id);
+      if (exists) {
+        return prev.map((i) => (i.id === item.id ? { ...i, qty: i.qty + 1 } : i));
       }
-      return [...prev, { ...dish, qty: 1 }];
+      return [...prev, { ...item, qty: 1 }];
     });
-    setIsDeliveryOpen(true);
   };
 
-  const handleUpdateCartQty = (id, delta) => {
-    setDeliveryCart((prev) =>
+  const updateItemQty = (id, delta) => {
+    setOrderItems((prev) =>
       prev
-        .map((i) => (i.id === id ? { ...i, qty: i.qty + delta } : i))
+        .map((i) => (i.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i))
         .filter((i) => i.qty > 0)
     );
   };
 
-  const cartFoodSubtotal = deliveryCart.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const deliveryFee = deliveryCart.length > 0 ? (COLONIA_DELIVERY_FEES[selectedColonia] || 40) : 0;
-  const deliveryTotal = cartFoodSubtotal + deliveryFee;
-
-  // Taquiza Catering Calculations
-  const pastorKilos = Math.round(guestCount * 0.35); // ~350g por persona
-  const taqueroHours = guestCount > 50 ? 4 : 3;
-  const complements = 'Salsas (Verde, Roja, Morita), Piña, Cebolla, Cilantro, Tortillas Nixtamalizadas, Frijoles Charros y Limones';
-  const cateringTotal = Math.round(guestCount * 145); // $145 MXN por persona
-
-  // Generate formal PDF quotation simulation / text file
-  const handleDownloadQuotationPDF = () => {
-    const textContent = `
-=====================================================
-COTIZACIÓN FORMAL DE TAQUIZA PARA EVENTOS
-TAQUERÍA: ${brandName.toUpperCase()}
-UBICACIÓN: ${brandCity}
-=====================================================
-Fecha de emisión: ${new Date().toLocaleDateString('es-MX')}
-Folio de Cotización: TQZ-${Math.floor(1000 + Math.random() * 9000)}
-
-DETALLE DEL EVENTO:
-• Número de invitados: ${guestCount} personas
-• Kilos de Pastor al Carbón: ${pastorKilos} kg de carne marinada artesanal
-• Horas de servicio con Taquero en Sitio: ${taqueroHours} horas
-• Barra de Complementos: ${complements}
-• Equipo en sitio: Trompo de acero inoxidable, comal y platos biodegradables
-
-DESGLOSE FINANCIERO:
-• Costo base por invitado: $145.00 MXN
-• Subtotal Taquiza: $${cateringTotal.toLocaleString('es-MX')}.00 MXN
-• Montaje y traslado en zona metropolitana: INCLUIDO
------------------------------------------------------
-TOTAL FINAL DE LA COTIZACIÓN: $${cateringTotal.toLocaleString('es-MX')}.00 MXN
-(Precios sujetos a confirmación con anticipo del 30%)
-=====================================================
-Para formalizar contrato, contáctanos vía WhatsApp al 55 1234 5678.
-    `.trim();
-
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Cotizacion_Taquiza_${guestCount}_Personas_${brandName.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const repeatOrder = () => {
+    setOrderItems([
+      { id: 'paquete_taquero', name: '🔥 Paquete Taquero Familiar (20 Tacos)', price: 480, qty: 1 },
+      { id: 'horchata', name: 'Agua de Horchata con Canela (1 Litro)', price: 65, qty: 2 },
+    ]);
   };
 
-  const whatsappCateringMessage = encodeURIComponent(
-    `¡Hola ${brandName}! Solicito formalizar mi cotización de Taquiza para Eventos:\n\n• Invitados: ${guestCount} personas\n• Pastor requerido: ${pastorKilos} kg\n• Taquero en sitio: ${taqueroHours} horas\n• Ubicación: ${brandCity}\n• Total estimado: $${cateringTotal} MXN\n\n¿Tienen la fecha disponible?`
-  );
+  const subtotal = orderItems.reduce((acc, curr) => acc + curr.price * curr.qty, 0);
+  const deliveryFee = 35;
+  const total = subtotal > 0 ? subtotal + deliveryFee : 0;
 
-  const whatsappDeliveryMessage = encodeURIComponent(
-    `¡Hola ${brandName}! Quiero pedir mi orden de Delivery Nocturno:\n\n${deliveryCart.map(i => `• ${i.qty}x ${i.name} ($${i.price * i.qty} MXN)`).join('\n')}\n\n• Salsa elegida: ${selectedSauce}\n• Colonia de entrega: ${selectedColonia} (Envío: $${deliveryFee} MXN)\n• TOTAL A PAGAR: $${deliveryTotal} MXN`
-  );
+  const handleSendWhatsAppOrder = () => {
+    const wa = phone ? phone.replace(/\D/g, '') : '525512345678';
+    const itemsText = orderItems
+      .map((i) => `• ${i.qty}x ${i.name} ($${i.price * i.qty})`)
+      .join('%0A');
+    const msg = `🌮 *NUEVO PEDIDO - ${brandName.toUpperCase()}*%0A%0A${itemsText}%0A%0A🌶️ *Salsa favorita:* ${selectedSalsa}%0A💰 *Total:* $${total} MXN (con envío)%0A📍 *Dirección de entrega:* (Favor de confirmar colonia en ${brandCity})`;
+    window.open(`https://wa.me/${wa}?text=${msg}`, '_blank');
+  };
+
+  const springTransition = { type: 'spring', stiffness: 400, damping: 15 };
 
   return (
-    <div className="min-h-screen bg-[#0C0708] text-stone-100 font-sans selection:bg-rose-500/30 relative">
-      {/* Demo Conversion Bar */}
+    <div className="min-h-screen bg-[#FFFDF0] text-black font-brutalist-mono selection:bg-[#F59E0B] selection:text-black">
       <DemoConversionBar
         currentKey="tacos"
         onSwitchDemo={onSwitchDemo}
@@ -157,379 +100,297 @@ Para formalizar contrato, contáctanos vía WhatsApp al 55 1234 5678.
         onOpenCheckout={onOpenCheckout}
       />
 
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-rose-950 via-rose-900 to-amber-950 text-rose-200 text-xs sm:text-sm py-2 px-4 text-center font-medium border-b border-rose-800/40 flex items-center justify-center gap-2">
-        <Flame className="w-4 h-4 text-amber-400" />
-        <span>Votada Mejor Taquería en {brandCity} • Abierto hasta 3:00 AM • Servicio de Delivery Nocturno</span>
+      {/* DIAGONAL NEO-BRUTALIST TICKER MARQUEE */}
+      <div className="bg-[#FFE500] border-y-3 border-black py-2.5 overflow-hidden whitespace-nowrap shadow-[0px_4px_0px_#000]">
+        <div className="flex animate-marquee gap-8 text-xs font-black uppercase tracking-wider font-brutalist-condensed text-lg">
+          <span>🌮 PASTOR AL CARBÓN 24/7</span>
+          <span>★ ORDENA POR WHATSAPP EN 3 CLICS</span>
+          <span>🌶️ SALSAS TATEMADAS ARTESANALES</span>
+          <span>🔥 EL MEJOR SUADERO DE LA CDMX</span>
+          <span>🌮 PASTOR AL CARBÓN 24/7</span>
+          <span>★ ORDENA POR WHATSAPP EN 3 CLICS</span>
+          <span>🌶️ SALSAS TATEMADAS ARTESANALES</span>
+        </div>
       </div>
 
-      {/* Header */}
-      <header className="sticky top-[49px] z-40 bg-[#0C0708]/90 backdrop-blur-md border-b border-rose-900/30 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-colors"
-              >
-                ← Volver al Portal
-              </button>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🌮</span>
-              <span className="font-extrabold tracking-tight text-lg sm:text-xl text-white">
-                {brandName}
-              </span>
-            </div>
+      {/* HERO SECTION - NEO-BRUTALISMO URBANO MEXICANO */}
+      <section className="relative px-4 sm:px-8 py-16 sm:py-24 max-w-7xl mx-auto overflow-hidden">
+        {/* Floating Rotated Brutalist Stickers */}
+        <motion.div
+          animate={{ rotate: [-6, -4, -6], y: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+          className="hidden md:block absolute top-10 right-12 z-20"
+        >
+          <div className="bg-[#FF005C] text-white font-brutalist-condensed text-xl px-5 py-2.5 border-3 border-black shadow-[6px_6px_0px_#000] -rotate-6 uppercase tracking-wider">
+            ¡Ordena por WhatsApp hoy! ⚡
           </div>
+        </motion.div>
 
-          <div className="hidden md:flex items-center gap-8 text-sm text-stone-300 font-medium">
-            <a href="#menu" className="hover:text-rose-400 transition-colors">Menú de Trompo</a>
-            <a href="#catering" className="hover:text-rose-400 transition-colors">Cotizador de Taquizas</a>
-            <a href="#ubicacion" className="hover:text-rose-400 transition-colors">Ubicación</a>
+        <motion.div
+          animate={{ rotate: [4, 6, 4] }}
+          transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
+          className="hidden lg:block absolute bottom-8 left-8 z-20"
+        >
+          <div className="bg-[#00F59B] text-black font-brutalist text-sm px-4 py-2 border-3 border-black shadow-[5px_5px_0px_#000] rotate-3 font-black uppercase">
+            🔥 Trompo al Carbón Encendido
           </div>
+        </motion.div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsDeliveryOpen(true)}
-              className="relative px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:brightness-110 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-rose-900/30 transition-all"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Delivery Nocturno</span>
-              {deliveryCart.length > 0 && (
-                <span className="bg-white text-rose-950 font-black text-xs px-1.5 py-0.5 rounded-full">
-                  {deliveryCart.reduce((sum, i) => sum + i.qty, 0)}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative pt-12 pb-20 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/60 border border-rose-600/40 text-rose-300 text-xs font-semibold">
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-current" /> 4.9 Estrellas en Google Maps ({brandCity})
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          {/* Left Column: Bold Condensed Typography */}
+          <div className="lg:col-span-7">
+            <div className="inline-block bg-[#FFE500] border-2 border-black px-3 py-1 text-xs font-black uppercase mb-4 shadow-[3px_3px_0px_#000]">
+              📍 Taquería de Barrio en {brandCity}
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-black text-white leading-[1.08] tracking-tight">
-              Tacos al carbón, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-orange-500">
-                trompo de autor &amp; mezcal
-              </span>
+            <h1 className="font-brutalist-condensed text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black uppercase leading-[0.88] tracking-tight mb-6">
+              {brandName}
             </h1>
 
-            <p className="text-stone-300 text-base sm:text-lg leading-relaxed max-w-xl font-light">
-              La consagración del taco en {brandCity}. Carne marinada en receta secreta con 12 especias, tortillas hechas a mano al momento y salsa tatemada en molcajete volcánico.
+            <p className="text-base sm:text-lg text-slate-900 font-bold max-w-xl mb-8 leading-snug">
+              Carne marinada con receta secreta de 3 generaciones, trompo de carbón de encino, piña asada y tortillas calientes hechas al momento.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <a
-                href="#catering"
-                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-rose-900/30 transition-all"
+            <div className="flex flex-wrap gap-4 items-center">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={springTransition}
+                onClick={() => {
+                  const el = document.getElementById('armador-pedido');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-[#FF005C] hover:bg-[#e00052] text-white px-8 py-4 font-brutalist text-lg font-black uppercase border-3 border-black shadow-[6px_6px_0px_#000] flex items-center gap-3"
               >
-                <span>Cotizar Taquiza para Evento</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
+                <span>Armar Mi Pedido Rápido</span>
+                <ArrowRight className="w-6 h-6 stroke-[3]" />
+              </motion.button>
 
-              <a
-                href="#menu"
-                className="px-6 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10 font-bold text-xs uppercase tracking-wider transition-all"
+              <button
+                onClick={handleSendWhatsAppOrder}
+                className="bg-white hover:bg-[#FAF0E6] text-black px-6 py-4 font-brutalist text-base font-black uppercase border-3 border-black shadow-[6px_6px_0px_#000] flex items-center gap-2"
               >
-                Ver Menú Digital
-              </a>
+                <Phone className="w-5 h-5 stroke-[2.5]" />
+                <span>Pedir Directo por WhatsApp</span>
+              </button>
             </div>
           </div>
 
+          {/* Right Column: Brutalist Frame with Real Photo */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-rose-500/30 shadow-[0_20px_70px_rgba(244,63,94,0.2)]">
-              <img
-                src="/images/tacos.webp"
-                alt="Tacos al Pastor CDMX"
-                loading="lazy"
-                decoding="async"
-                className="w-full h-[440px] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0C0708] via-transparent to-transparent opacity-80" />
-              <div className="absolute bottom-6 left-6 right-6 p-4 rounded-2xl bg-black/75 backdrop-blur-md border border-rose-500/20 flex items-center justify-between">
-                <div>
-                  <span className="text-amber-400 text-xs font-bold block">Trompo a la Leña</span>
-                  <span className="text-xs text-stone-300">Carne 100% de Cerdo Certificada</span>
+            <div className="relative border-3 border-black bg-white p-3 shadow-[10px_10px_0px_#000]">
+              <div className="relative aspect-square overflow-hidden border-2 border-black">
+                <img
+                  src="/images/tacos.webp"
+                  alt={brandName}
+                  className="w-full h-full object-cover filter contrast-110"
+                />
+                <div className="absolute bottom-2 left-2 bg-[#FFE500] border-2 border-black px-3 py-1 font-brutalist text-xs font-black uppercase shadow-[2px_2px_0px_#000]">
+                  🌮 100% Sabor Chilango
                 </div>
-                <div className="text-right">
-                  <span className="text-rose-400 font-bold text-xs">Abierto hasta 3 AM</span>
-                </div>
+              </div>
+              <div className="pt-3 flex justify-between items-center text-xs font-black uppercase">
+                <span>Tiempo Promedio: 25 - 35 Min</span>
+                <span className="text-[#FF005C]">★★★★★ 4.9 (1,840 Reseñas)</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Menú Section with Delivery Add button */}
-      <section id="menu" className="py-16 px-6 bg-[#0E090B] border-t border-rose-900/20">
+      {/* EXCLUSIVE COMPONENT: INTERACTIVE TACO ORDER BUILDER & BILLBOARD MENU */}
+      <section id="armador-pedido" className="py-16 px-4 sm:px-8 border-t-3 border-black bg-[#FAF7E8]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
             <div>
-              <span className="text-xs font-bold text-rose-400 uppercase tracking-widest">
-                Menú de la Casa
+              <span className="bg-black text-[#FFE500] px-3 py-1 text-xs font-black uppercase inline-block mb-2 shadow-[2px_2px_0px_#FFE500]">
+                Cartelera Oficial de Tacos
               </span>
-              <h2 className="text-3xl font-black text-white mt-1">
-                Especialidades de {brandName}
+              <h2 className="font-brutalist-condensed text-4xl sm:text-6xl font-black uppercase tracking-tight">
+                Menú & Armador de Pedido en Vivo
               </h2>
             </div>
 
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-              {[
-                { id: 'trompo', label: 'Al Pastor' },
-                { id: 'cortes', label: 'Cortes Finos' },
-                { id: 'mezcal', label: 'Mixología & Mezcal' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-rose-600 text-white shadow'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Quick action: Repeat popular order */}
+            <button
+              onClick={repeatOrder}
+              className="bg-[#FFE500] hover:bg-[#f2d800] text-black px-4 py-2 border-2 border-black font-brutalist text-xs font-black uppercase shadow-[4px_4px_0px_#000] flex items-center gap-2 self-start md:self-auto"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Cargar "Paquete Taquero Familiar"</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {menu[activeTab].map((dish) => (
-              <div
-                key={dish.id}
-                className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-4 hover:border-rose-500/40 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-white text-sm">{dish.name}</h3>
-                    {dish.popular && (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold">
-                        Top Favorito
-                      </span>
-                    )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left 7 Cols: Billboard Menu with Tabs */}
+            <div className="lg:col-span-7">
+              {/* Category Tab Buttons */}
+              <div className="flex border-b-3 border-black mb-6 gap-2">
+                {[
+                  { key: 'tacos', label: '🌮 Tacos Individuales & Órdenes' },
+                  { key: 'paquetes', label: '🔥 Paquetes & Taquizas' },
+                  { key: 'bebidas', label: '🥤 Aguas & Refrescos' },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveMenuTab(tab.key)}
+                    className={`px-4 py-3 font-brutalist text-xs sm:text-sm font-black uppercase border-t-3 border-x-3 border-black transition-all ${
+                      activeMenuTab === tab.key
+                        ? 'bg-[#FF005C] text-white shadow-[4px_-4px_0px_#000]'
+                        : 'bg-white text-black hover:bg-slate-100'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-4">
+                {menuItems[activeMenuTab].map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 bg-white border-3 border-black shadow-[5px_5px_0px_#000] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-brutalist text-base sm:text-lg font-black uppercase text-black">
+                          {item.name}
+                        </h4>
+                        <span className="bg-[#FFE500] border-2 border-black text-xs font-black px-2 py-0.5">
+                          ${item.price} MXN
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 max-w-md">{item.desc}</p>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={springTransition}
+                      onClick={() => addItemToOrder(item)}
+                      className="bg-black text-[#FFE500] hover:bg-slate-900 px-4 py-2 border-2 border-black font-brutalist text-xs font-black uppercase shadow-[3px_3px_0px_#FFE500] flex items-center justify-center gap-1.5 self-end sm:self-auto shrink-0"
+                    >
+                      <Plus className="w-4 h-4 stroke-[3]" />
+                      <span>Agregar</span>
+                    </motion.button>
                   </div>
-                  <p className="text-xs text-stone-400 mt-1 leading-relaxed">{dish.desc}</p>
-                  <span className="font-mono text-amber-400 font-extrabold text-sm block mt-2">
-                    ${dish.price} MXN
+                ))}
+              </div>
+            </div>
+
+            {/* Right 5 Cols: Live Receipt Order Box (Brutalist Ticket) */}
+            <div className="lg:col-span-5 bg-white border-3 border-black shadow-[8px_8px_0px_#000] p-6 sticky top-20">
+              <div className="flex justify-between items-center border-b-2 border-dashed border-black pb-3 mb-4">
+                <div>
+                  <h3 className="font-brutalist-condensed text-2xl font-black uppercase">
+                    Tu Pedido Taquero
+                  </h3>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Ticket #LMX-{Math.floor(Math.random() * 8000 + 1000)}
                   </span>
                 </div>
-
-                <button
-                  onClick={() => handleAddDish(dish)}
-                  className="px-3.5 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all flex-shrink-0 border border-rose-500/30"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Pedir</span>
-                </button>
+                <ShoppingBag className="w-6 h-6" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* 2. Calculadora de Taquizas para Eventos + PDF Formal Download */}
-      <section id="catering" className="py-20 px-6 bg-gradient-to-b from-[#0E090B] to-[#080506] border-t border-rose-900/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-10">
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
-              Taquizas a Domicilio en CDMX
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2">
-              Calcula tu Evento en Tiempo Real
-            </h2>
-            <p className="text-xs text-stone-400 mt-1">
-              Llevamos el trompo de pastor, taquero profesional en sitio y barra libre de salsas y complementos.
-            </p>
-          </div>
-
-          <div className="p-6 sm:p-8 rounded-3xl bg-black/60 border border-rose-500/30 shadow-2xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <label className="text-xs font-bold text-stone-300 block">
-                  Número de Invitados:
-                </label>
-                <span className="text-xs text-stone-400">Recomendado para fiestas, cumpleaños y corporativos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-rose-400" />
-                <span className="font-mono text-3xl font-black text-white">{guestCount}</span>
-                <span className="text-xs text-stone-400">personas</span>
-              </div>
-            </div>
-
-            <input
-              type="range"
-              min="20"
-              max="200"
-              step="5"
-              value={guestCount}
-              onChange={(e) => setGuestCount(Number(e.target.value))}
-              className="w-full h-2.5 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
-            />
-
-            {/* Event Specs Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-center">
-                <span className="text-[10px] text-stone-400 uppercase block font-bold">Carne al Pastor</span>
-                <span className="text-base font-black text-white font-mono mt-1 block">{pastorKilos} kg</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-center">
-                <span className="text-[10px] text-stone-400 uppercase block font-bold">Taquero en Sitio</span>
-                <span className="text-base font-black text-white font-mono mt-1 block">{taqueroHours} horas</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-center">
-                <span className="text-[10px] text-stone-400 uppercase block font-bold">Precio / Persona</span>
-                <span className="text-base font-black text-[#00F59B] font-mono mt-1 block">$145 MXN</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-center">
-                <span className="text-[10px] text-stone-400 uppercase block font-bold">Total Estimado</span>
-                <span className="text-base font-black text-amber-400 font-mono mt-1 block">${cateringTotal.toLocaleString('es-MX')} MXN</span>
-              </div>
-            </div>
-
-            {/* Action Buttons: PDF Download + WhatsApp Order */}
-            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={handleDownloadQuotationPDF}
-                className="flex-1 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-white/10"
-              >
-                <Download className="w-4 h-4 text-rose-400" />
-                <span>Descargar Cotización Formal</span>
-              </button>
-
-              <a
-                href={`https://wa.me/${phone?.replace(/\D/g, '') || '5215512345678'}?text=${whatsappCateringMessage}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-900/30 transition-all"
-              >
-                <span>Apartar Fecha por WhatsApp (${cateringTotal} MXN)</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Delivery Cart Drawer */}
-      {isDeliveryOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-[#120B0D] border-l border-white/15 h-full flex flex-col p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-rose-500" />
-                <h3 className="text-white font-black text-lg">Delivery Nocturno</h3>
-              </div>
-              <button onClick={() => setIsDeliveryOpen(false)} className="p-1.5 text-stone-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-4 space-y-3">
-              {deliveryCart.length === 0 ? (
-                <div className="text-center py-12 text-stone-400 text-xs">
-                  Aún no has agregado tacos a tu orden.
+              {/* Items in ticket */}
+              {orderItems.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-500 font-bold uppercase">
+                  No has agregado tacos todavía. Elige de la cartelera a la izquierda.
                 </div>
               ) : (
-                deliveryCart.map((dish) => (
-                  <div key={dish.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white text-xs font-bold">{dish.name}</h4>
-                      <span className="text-amber-400 font-mono text-xs">${dish.price * dish.qty} MXN</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-black/40 rounded-lg p-1 border border-white/10">
-                      <button onClick={() => handleUpdateCartQty(dish.id, -1)} className="p-1 text-stone-400 hover:text-white">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="font-mono text-xs text-white font-bold px-1.5">{dish.qty}</span>
-                      <button onClick={() => handleUpdateCartQty(dish.id, 1)} className="p-1 text-stone-400 hover:text-white">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {/* Selector de Salsas */}
-              {deliveryCart.length > 0 && (
-                <div className="pt-3 border-t border-white/10 space-y-3">
-                  <div>
-                    <label className="text-[11px] font-bold text-stone-300 block mb-1">
-                      Selecciona tu Salsa Artesanal de Cortesía:
-                    </label>
-                    <select
-                      value={selectedSauce}
-                      onChange={(e) => setSelectedSauce(e.target.value)}
-                      className="w-full bg-[#1C1214] border border-white/15 text-white text-xs rounded-xl p-2.5 outline-none"
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-1 mb-4">
+                  {orderItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center text-xs border-b border-slate-200 pb-2"
                     >
-                      <option value="Habanero Tatemado">Habanero Tatemado (Muy Picante 🔥🔥)</option>
-                      <option value="Morita con Ajo">Salsa Morita con Ajo Asado (Picor Medio 🔥)</option>
-                      <option value="Verde Cruda de Aguacate">Verde Cruda con Aguacate (Suave)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-stone-300 block mb-1">
-                      Colonia de Entrega (Cálculo de Envío):
-                    </label>
-                    <select
-                      value={selectedColonia}
-                      onChange={(e) => setSelectedColonia(e.target.value)}
-                      className="w-full bg-[#1C1214] border border-white/15 text-white text-xs rounded-xl p-2.5 outline-none"
-                    >
-                      {Object.entries(COLONIA_DELIVERY_FEES).map(([col, fee]) => (
-                        <option key={col} value={col}>{col} (+$ {fee} MXN)</option>
-                      ))}
-                    </select>
-                  </div>
+                      <div className="max-w-[180px]">
+                        <div className="font-black uppercase truncate">{item.name}</div>
+                        <div className="text-slate-500 text-[10px]">
+                          ${item.price} x {item.qty} = ${item.price * item.qty}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateItemQty(item.id, -1)}
+                          className="w-6 h-6 border-2 border-black bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-black"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="font-black font-mono w-4 text-center">{item.qty}</span>
+                        <button
+                          onClick={() => updateItemQty(item.id, 1)}
+                          className="w-6 h-6 border-2 border-black bg-[#FFE500] hover:bg-yellow-400 flex items-center justify-center font-black"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
 
-            {deliveryCart.length > 0 && (
-              <div className="pt-4 border-t border-white/10 space-y-3">
-                <div className="space-y-1 text-xs text-stone-400">
-                  <div className="flex justify-between">
-                    <span>Subtotal Platillos:</span>
-                    <span className="font-mono text-white">${cartFoodSubtotal} MXN</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Envío a {selectedColonia}:</span>
-                    <span className="font-mono text-white">${deliveryFee} MXN</span>
-                  </div>
-                  <div className="flex justify-between text-base font-bold text-white pt-1 border-t border-white/5">
-                    <span>Total a Pagar:</span>
-                    <span className="font-mono text-[#00F59B] text-xl font-black">${deliveryTotal} MXN</span>
-                  </div>
-                </div>
-
-                <a
-                  href={`https://wa.me/${phone?.replace(/\D/g, '') || '5215512345678'}?text=${whatsappDeliveryMessage}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg"
+              {/* Salsa Selection Selector */}
+              <div className="mb-4 pt-2 border-t border-dashed border-black">
+                <label className="text-[10px] font-black uppercase text-slate-700 block mb-1">
+                  🌶️ Elige tu Salsa Principal:
+                </label>
+                <select
+                  value={selectedSalsa}
+                  onChange={(e) => setSelectedSalsa(e.target.value)}
+                  className="w-full bg-[#FAF7E8] border-2 border-black text-xs font-bold p-2 outline-none cursor-pointer"
                 >
-                  <span>Confirmar Pedido vía WhatsApp</span>
-                  <ArrowRight className="w-4 h-4" />
-                </a>
+                  <option value="Habanero Tatemado 🔥🔥🔥">Habanero Tatemado (Muy Picosa) 🔥🔥🔥</option>
+                  <option value="Salsa Verde Taquera con Aguacate 🥑">Verde de Aguacate con Cilantro 🥑</option>
+                  <option value="Morita y Chile de Árbol 🌶️">Chile Morita y Ajo Asado 🌶️</option>
+                  <option value="Cebollitas con Habanero y Limón">Cebollitas Encurtidas con Limón</option>
+                </select>
               </div>
-            )}
+
+              {/* Math totals */}
+              <div className="space-y-1.5 border-t-2 border-dashed border-black pt-3 mb-6 text-xs">
+                <div className="flex justify-between">
+                  <span>Subtotal Tacos:</span>
+                  <span className="font-bold">${subtotal} MXN</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Envío a domicilio ({brandCity}):</span>
+                  <span>${subtotal > 0 ? deliveryFee : 0} MXN</span>
+                </div>
+                <div className="flex justify-between font-black text-base pt-2 border-t border-black text-black">
+                  <span>TOTAL A PAGAR:</span>
+                  <span className="bg-[#FFE500] px-2 py-0.5 border border-black">${total} MXN</span>
+                </div>
+              </div>
+
+              {/* Checkout / WhatsApp CTA Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={springTransition}
+                disabled={orderItems.length === 0}
+                onClick={handleSendWhatsAppOrder}
+                className="w-full bg-[#00F59B] hover:bg-[#00d485] text-black py-4 font-brutalist text-sm font-black uppercase border-3 border-black shadow-[5px_5px_0px_#000] flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span>Mandar Pedido por WhatsApp</span>
+                <ArrowRight className="w-5 h-5 stroke-[3]" />
+              </motion.button>
+            </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 text-center text-xs text-stone-500 border-t border-rose-900/20">
-        <p>© 2026 {brandName} • Tradición y Pasión Taquera en {brandCity}.</p>
+      {/* FOOTER */}
+      <footer className="bg-black text-white py-12 px-4 sm:px-8 border-t-3 border-black text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="font-brutalist-condensed text-3xl uppercase text-[#FFE500]">
+            {brandName}
+          </div>
+          <div className="text-center md:text-right text-slate-400 text-xs">
+            Abierto de Martes a Domingo de 18:00 a 04:00 hrs · {brandCity}
+          </div>
+        </div>
       </footer>
     </div>
   );
