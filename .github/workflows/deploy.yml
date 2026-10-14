@@ -30,7 +30,13 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build
+        run: |
+          if ! npm run build 2> error.log; then
+            cat error.log
+            ERR=$(cat error.log | head -n 20 | tr '\r\n' ' ')
+            echo "::error title=Vite Build Failure::$ERR"
+            exit 1
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
