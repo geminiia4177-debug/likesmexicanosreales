@@ -30,21 +30,7 @@ jobs:
         run: npm install
 
       - name: Build
-        id: vite_build
-        continue-on-error: true
-        run: npm run build > build_output.txt 2>&1
-
-      - name: Show Build Log
-        if: always()
-        run: |
-          echo "## Build Output Log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat build_output.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Check Build Status
-        if: steps.vite_build.outcome != 'success'
-        run: exit 1
+        run: npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
