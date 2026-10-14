@@ -246,7 +246,8 @@
 .font-industrial {
   font-family: 'Chakra Petch', sans-serif;
 }
-.font-industrial-mono {
+.font-industrial-mono,
+.font-mono-tech {
   font-family: 'JetBrains Mono', monospace;
 }
 
